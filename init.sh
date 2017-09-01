@@ -37,6 +37,11 @@ ${base_dir}/bin/mysql -P${port}  -S ${base_data_dir}/${node_name}/${node_name}.s
 
 if [[ ${primary_flag} = 'Y' ]];then
  ${base_dir}/bin/mysql -P${port}  -S ${base_data_dir}/${node_name}/${node_name}.sock -e "
+ ## remove default users to make replication user is able to connect
+ delete from mysql.user where user='';
+ flush privileges;
+ 
+ #  create replication user
  CREATE USER rpl_user@'%';
  GRANT REPLICATION SLAVE ON *.* TO rpl_user@'%' IDENTIFIED BY 'rpl_pass';
  FLUSH PRIVILEGES;
@@ -57,7 +62,9 @@ elif [[ ${primary_flag} = 'N' ]];then
  show processlist;
 "
   elif [[ ${mysql_version} = '5.6' ]];then
- ${base_dir}/bin/mysql -P${port}  -S ${base_data_dir}/${node_name}/${node_name}.sock -e "
+ ${base_dir}/bin/mysql -P${port}  -S ${base_data_dir}/${node_name}/${node_name}.sock -e " 
+
+ ## initialized slave parallel works 
  SET GLOBAL slave_parallel_workers=2;
  start slave;
  show slave status\G;
